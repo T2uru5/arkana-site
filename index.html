@@ -193,6 +193,62 @@
   .status-row .label{color:var(--muted);}
   .status-row .value{color:var(--graphite); text-align:right;}
 
+  /* ---------- Waitlist ---------- */
+  .waitlist p{max-width:520px;}
+  .waitlist-form{margin-top:30px; max-width:560px;}
+  .field-row{
+    display:flex;
+    align-items:stretch;
+    gap:14px;
+  }
+  .waitlist-form input[type="text"],
+  .waitlist-form input[type="email"]{
+    flex:1;
+    border:none;
+    border-bottom:1px solid var(--border);
+    background:transparent;
+    padding:10px 2px;
+    font-size:15px;
+    font-family:inherit;
+    color:var(--graphite);
+    min-width:0;
+  }
+  .waitlist-form input#wl-name{flex:0.8;}
+  .waitlist-form input#wl-email{flex:1.2;}
+  .waitlist-form input::placeholder{color:var(--muted);}
+  .waitlist-form input:focus{outline:none; border-bottom-color:var(--gold);}
+  .waitlist-form button{
+    border:1px solid var(--gold);
+    background:transparent;
+    color:var(--navy);
+    font-size:13px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:0 22px;
+    cursor:pointer;
+    white-space:nowrap;
+    font-family:inherit;
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .waitlist-form button:hover{background:var(--gold); color:var(--white);}
+  .waitlist-form button:disabled{opacity:0.5; cursor:default;}
+  .waitlist-note{
+    margin-top:14px;
+    font-size:14px;
+    color:var(--muted);
+    min-height:1.2em;
+  }
+  .waitlist-note.success{color:var(--navy);}
+  .waitlist-note.error{color:#9B4B3E;}
+  .waitlist-note a{border-bottom:1px solid var(--gold);}
+
+  @media (max-width:640px){
+    .field-row{flex-direction:column; gap:12px;}
+    .waitlist-form input#wl-name,
+    .waitlist-form input#wl-email{flex:none; width:100%;}
+    .waitlist-form button{width:100%; padding:12px 22px;}
+  }
+
   /* ---------- Contact ---------- */
   .contact-block{
     background:var(--navy);
@@ -298,6 +354,24 @@
   </div>
 </section>
 
+<section class="waitlist">
+  <div class="wrap">
+    <div class="kicker">Stay in the Loop</div>
+    <h2>Get notified at launch.</h2>
+    <p>We're heads-down building the desktop MVP — Pre-Seed, no fixed launch date yet. Leave your email and we'll reach out the moment there's something real to try. No spam, no countdown.</p>
+
+    <form class="waitlist-form" id="waitlist-form" novalidate>
+      <input type="hidden" name="_subject" value="New Arkana waitlist signup">
+      <div class="field-row">
+        <input type="text" id="wl-name" name="name" placeholder="Name (optional)" autocomplete="name">
+        <input type="email" id="wl-email" name="email" placeholder="Email" required autocomplete="email">
+        <button type="submit">Notify Me</button>
+      </div>
+      <p class="waitlist-note" id="waitlist-note" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+
 <div class="contact-block">
   <div class="wrap">
     <div class="kicker">Get in Touch</div>
@@ -323,6 +397,62 @@
 <footer>
   &copy; 2026 Whirle Wind LLP · Arkana AI
 </footer>
+
+<script>
+(function(){
+  // TODO before launch: replace with the real Formspree endpoint —
+  // create a free form at https://formspree.io (sign up, "New Form",
+  // connect erablay@gmail.com), then paste its "https://formspree.io/f/xxxxxxxx"
+  // URL here. Submissions land in the Formspree dashboard AND get
+  // emailed to whatever address the form is connected to.
+  var FORMSPREE_ENDPOINT = "https://formspree.io/f/REPLACE_WITH_YOUR_FORM_ID";
+
+  var form = document.getElementById("waitlist-form");
+  var note = document.getElementById("waitlist-note");
+  var emailField = document.getElementById("wl-email");
+  var btn = form.querySelector("button");
+
+  function setNote(text, kind){
+    note.textContent = text;
+    note.className = "waitlist-note" + (kind ? " " + kind : "");
+  }
+
+  form.addEventListener("submit", function(event){
+    event.preventDefault();
+
+    var email = emailField.value.trim();
+    if(!email){
+      setNote("Please enter an email address.", "error");
+      emailField.focus();
+      return;
+    }
+
+    btn.disabled = true;
+    setNote("Sending…");
+
+    fetch(FORMSPREE_ENDPOINT, {
+      method: "POST",
+      body: new FormData(form),
+      headers: { "Accept": "application/json" }
+    })
+      .then(function(response){
+        if(!response.ok) throw new Error("submission failed");
+        Array.prototype.forEach.call(form.querySelectorAll("input, button"), function(el){
+          el.style.display = "none";
+        });
+        setNote("Thanks — we'll be in touch.", "success");
+      })
+      .catch(function(){
+        btn.disabled = false;
+        note.innerHTML =
+          "Something went wrong. <a href=\"mailto:erablay@gmail.com?subject=Arkana%20waitlist&body=Email%3A%20" +
+          encodeURIComponent(email) +
+          "\">Email us directly</a> instead.";
+        note.className = "waitlist-note error";
+      });
+  });
+})();
+</script>
 
 </body>
 </html>
